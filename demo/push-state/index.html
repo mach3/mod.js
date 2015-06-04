@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Demo: pushState</title>
+	<style>
+
+	header nav ul {
+		list-style-type: none;
+		margin: 1em 0;
+		padding: 0;
+	}
+	header nav li {
+		display: inline;
+	}
+
+	header nav a {
+		display: inline-block;
+		background-color: #eee;
+		color: #333;
+		padding: .3em .6em;
+		font-size: 0.8em;
+		text-decoration: none;
+	}
+	header nav a.on {
+		background-color: #888;
+		color: #fff;
+	}
+
+	#container section {
+		display: block;
+		position: absolute;
+		opacity: 0;
+		transition: opacity .3s ease 0s;
+	}
+
+	#container section.on {
+		opacity: 1;
+	}
+
+	</style>
+</head>
+<body>
+
+	<h1>pushState Demo</h1>
+
+	<header>
+		<nav>
+			<ul id="navigation">
+				<li><a href="./" data-name="home">Home</a></li>
+				<li><a href="./foo" data-name="foo">Foo</a></li>
+				<li><a href="./bar" data-name="bar">Bar</a></li>
+				<li><a href="./baz" data-name="baz">Baz</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<article id="container">
+		<section data-name="home">
+			<h1>Home</h1>
+			<pre class="log"></pre>
+		</section>
+		<section data-name="foo">
+			<h1>Foo</h1>
+			<pre class="log"></pre>
+		</section>
+		<section data-name="bar">
+			<h1>Bar</h1>
+			<pre class="log"></pre>
+		</section>
+		<section data-name="baz">
+			<h1>Baz</h1>
+			<pre class="log"></pre>
+		</section>
+	</article>
+
+	<script src="../../bower_components/jquery/dist/jquery.js"></script>
+	<script src="../../dist/mod.dev.js"></script>
+
+	<script>
+
+	$("#navigation").on("click", "a", function(e){
+		e.preventDefault();
+		history.pushState({}, "", e.currentTarget.href);
+	});
+
+	mod.exports("page", mod.Class({
+		container: null,
+		_initialize: function(){
+			this.pages = $("#container").children("section");
+			this.navs = $("header a");
+		},
+		get: function(from, name){
+			return from.filter(function(){
+				return $(this).data("name") === name;
+			});
+		},
+		flip: function(name){
+			this.pages.removeClass("on");
+			this.get(this.pages, name).addClass("on");
+			this.navs.removeClass("on");
+			this.get(this.navs, name).addClass("on");
+		},
+		log: function(name, log){
+			this.get(this.pages, name).find(".log")
+			.prepend(
+				document.createTextNode(log + " : " + new Date() + "\n")
+			);
+		}
+	}));
+
+	mod.exports("action-common", mod.Class({
+		page: null,
+		_initialize: function(){
+			this.page = mod.require("page");
+		}
+	}));
+
+	mod.exports("action-home", mod.Class({
+		_extends: ["action-common"],
+		_initialize: function(){
+			this.page.log("home", "initialize");
+		},
+		_onRoute: function(){
+			this.page.flip("home");
+			this.page.log("home", "resolved");
+		}
+	}))
+
+	mod.exports("action-foo", mod.Class({
+		_extends: ["action-common"],
+		_initialize: function(){
+			this.page.log("foo", "initialize");
+		},
+		_onRoute: function(){
+			this.page.flip("foo");
+			this.page.log("foo", "resolved");
+		}
+	}));
+
+	mod.exports("action-bar", mod.Class({
+		_extends: ["action-common"],
+		_initialize: function(){
+			this.page.log("bar", "initialize");
+		},
+		_onRoute: function(){
+			this.page.flip("bar");
+			this.page.log("bar", "resolved");
+		}
+	}));
+
+	mod.exports("action-baz", mod.Class({
+		_extends: ["action-common"],
+		_initialize: function(){
+			this.page.log("baz", "initialize");
+		},
+		_onRoute: function(){
+			this.page.flip("baz");
+			this.page.log("baz", "resolved");
+		}
+	}));
+
+	mod.require("routes", true)
+	.config({
+		defaultPath: "/"
+	})
+	.map({
+		"/$": "action-home",
+		"foo$": "action-foo",
+		"bar$": "action-bar",
+		"baz$": "action-baz"
+	})
+	.resolve()
+	.watch();
+
+	</script>
+	
+</body>
+</html>

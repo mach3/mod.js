@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Demo: Task Application</title>
+
+	<style>
+
+	header nav ul {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		font-size: 0.8em;
+	}
+	header nav li {
+		display: inline-block;
+	}
+	header nav a {
+		display: inline-block;
+		color: #fff;
+		text-decoration: none;
+		background-color: #999;
+		padding: .5em 1em;
+	}
+	header nav a:hover {
+		background-color: #666;
+	}
+	header nav a.on {
+		background-color: #333;
+	}
+	#container .page {
+		display: none;
+	}
+	#container .page.on {
+		display: block;
+	}
+	#form-tasks input[type=text] {
+		font-size: 1em;
+		padding: .3em .6em;
+		border-radius: .3em;
+		border: 1px solid #999;
+	}
+	#form-tasks input[type=submit] {
+		font-size: 1em;
+		padding: .3em .6em;
+		border-radius: .3em;
+		border: 1px solid #999;
+		background-color: #eee;
+		margin-left: .3em;
+	}
+	#tasks {
+		list-style-type: none;
+		padding: 0;
+		margin: 1em 0;
+	}
+	#tasks li {
+		border: 1px solid #ccc;
+		padding: 1em;
+		margin-top: -1px;
+	}
+	#tasks .content,
+	#tasks time {
+		display: block;
+		margin-left: 80px;
+	}
+	#tasks time {
+		color: #999;
+		font-size: 0.8em;
+	}
+	#tasks .button-done {
+		float: left;
+	}
+
+	</style>
+</head>
+<body>
+
+	<header>
+		<nav>
+			<ul>
+				<li><a href="#/home" data-name="home">Home</a></li>
+				<li><a href="#/tasks" data-name="tasks">Tasks</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<div id="container">
+		<div class="page" data-name="home">
+			<h1>App Task</h1>
+			<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Pariatur consequuntur nulla ullam reprehenderit tempora nam temporibus excepturi officiis sapiente eum laborum, labore nesciunt eos quam perspiciatis. Dolore, iusto ducimus quia?</p>
+		</div>
+		<div class="page" data-name="tasks">
+			<h1>Tasks</h1>
+			<form id="form-tasks">
+				<input type="text" name="task"><input type="submit" value="Add Task">
+			</form>
+			<ul id="tasks"></ul>
+		</div>
+	</div>
+
+	<script src="../../bower_components/jquery/dist/jquery.js"></script>
+	<script src="../../dist/mod.dev.js"></script>
+
+	<script>
+
+	!function(){
+
+		mod.exports("pages", mod.Class({
+			_initialize: function(){
+				this.pages = $("#container").find(".page");
+				this.nav = $("header").find("nav a[data-name]");
+			},
+			flip: function(name){
+				this.pages.removeClass("on")
+				.filter("[data-name=" + name + "]")
+				.addClass("on");
+
+				this.nav.removeClass("on")
+				.filter("[data-name=" + name + "]")
+				.addClass("on");
+			}
+		}));
+
+		mod.exports("action-home", function(){
+			mod.require("pages").flip("home");
+		});
+
+		mod.exports("action-tasks", mod.Class({
+			_initialize: function(){
+				// modules
+				this.tasks = mod.require("collection", true);
+				this.util = mod.require("util");
+
+				// nodes
+				this.form = $("#form-tasks");
+				this.container = $("#tasks");
+
+				// events
+				this.form.on("submit", this._onSubmit);
+				this.tasks.on("update", this._onTaskUpdate);
+				this.container.on("click", ".button-done", this._onClickDone);
+			},
+			_onRoute: function(){
+				mod.require("pages").flip("tasks");
+			},
+			_onSubmit: function(e){
+				e.preventDefault();
+				var value = this.util.serialize(this.form).task;
+				if(value){
+					this.tasks.push({
+						time: new Date(),
+						task: value
+					});
+					this.form.trigger("reset");
+				}
+			},
+			_onTaskUpdate: function(e){
+				var my = this;
+				this.container.html("");
+				this.tasks.each(function(item){
+					my.render(item).prependTo(my.container);
+				});
+			},
+			render: function(vars){
+				return this.util.template('\
+					<li>\
+						<button class="button-done" value="{{__id__}}">Done!</button>\
+						<span class="content">{{task}}</span>\
+						<time>{{time}}</time>\
+					</li>\
+				', vars, true);
+			},
+			_onClickDone: function(e){
+				var id = parseInt($(e.currentTarget).val(), 10);
+				this.tasks.remove(function(item){
+					return item.__id__ === id;
+				});
+			}
+		}));
+
+		// routes
+		mod.require("routes", true)
+		.config({
+			mode: "hash",
+			defaultPath: "#/home"
+		})
+		.map({
+			"^#/home": "action-home",
+			"^#/tasks": "action-tasks"
+		})
+		.resolve()
+		.watch();
+
+	}();
+
+	</script>
+	
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "mod.js",
+  "version": "0.0.1",
+  "authors": [
+    "mach3 <http://github.com/mach3>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "1",
+    "es5-shim": "~4.1.4"
+  }
+}
