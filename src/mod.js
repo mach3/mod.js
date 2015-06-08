@@ -7,6 +7,35 @@
 	 */
 	var u = {
 		/**
+		 * Chainly run functions
+		 * @param {Number} delay (optional)
+		 * @param {Function, Function, ...} callback, callback, ...
+		 * @return {jQuery.Deferred}
+		 */
+		chain: function(/*[delay, ] callback, callback, callback .... */){
+			var df, args, delay, process, timer;
+			df = $.Deferred();
+			args = u.toArray(arguments);
+			delay = u.type(args[0], "Number") ? args.shift() : 1;
+			process = function(){
+				clearTimeout(timer);
+				if(! args.length){
+					return df.resolve();
+				}
+				if(! u.type(args[0], "Function")){
+					return df.reject();
+				}
+				delay = args.shift()();
+				if(false === delay){
+					return df.reject();
+				}
+				delay = delay || 1;
+				timer = setTimeout(process, delay);
+			};
+			timer = setTimeout(process, delay);
+			return df.promise();
+		},
+		/**
 		 * Return escaped string
 		 * @param {String} str
 		 */
