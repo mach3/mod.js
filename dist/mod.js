@@ -3,7 +3,7 @@
  * ------
  * Class library and module container for jQuery
  * 
- * @version 0.0.2 (2015-06-08)
+ * @version 0.0.2 (2015-07-13)
  * @author mach3 <http://github.com/mach3>
  * @license MIT
  */
@@ -144,7 +144,9 @@
 		type: function(obj, test){
 			var m, type;
 			m = Object.prototype.toString.call(obj).match(/^\[object\s(\w+)\]$/);
-			type = m ? m[1] : void 0;
+			type = (obj === void 0) ? "Undefined"
+				: !! m ? m[1]
+				: void 0;
 			return test ? type === test : type;
 		}
 	};
@@ -613,7 +615,7 @@
 		_extends: ["config", "events"],
 
 		_options: {
-			target: null, // target object
+			target: window, // target object
 			property: "", // property name of the object (dot syntax)
 			callback: null, // callback function (returned value is to be watched)
 			interval: 50 // watching interval
@@ -634,7 +636,7 @@
 		 */
 		isHashChange: function(){
 			var o = this.config();
-			return ! o.callback && ("onhashchange" in window) && o.target === location && o.property === "hash";
+			return ! o.callback && ("onhashchange" in window) && o.target === window && o.property === "location.hash";
 		},
 
 		/**
@@ -722,8 +724,7 @@
 		util: null,
 
 		_initialize: function(){
-			this.observer = mod.require("observer", true)
-			.config({ target: location });
+			this.observer = mod.require("observer", true);
 			this.actions = [];
 		},
 
@@ -808,7 +809,7 @@
 		watch: function(watch){
 			watch = (watch === void 0) ? true : watch;
 			this.observer.unwatch()
-			.config({property: this.config("mode")})
+			.config({property: "location." + this.config("mode")})
 			.watch();
 			this.observer[watch ? "on" : "off"]("change", this._onChange);
 		},
